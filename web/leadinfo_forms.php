@@ -7,6 +7,15 @@ $leadinfo_post_json = file_get_contents('php://input');
 if($leadinfo_post_json) {
     $leadinfo_post = json_decode($leadinfo_post_json);
 
+    $leadinfo_fields_array = array(
+        'company' => $leadinfo_post->company,
+        'contact' => $leadinfo_post->contact,
+        'on_url' => $leadinfo_post->on_url,
+        'timestamp' => $leadinfo_post->timestamp,
+        'type' => $leadinfo_post->type,
+        'value' => $leadinfo_post->value
+    );
+
     $mysqli = new mysqli(DB_host, DB_user, DB_pass, DB_database);
 
     // Check connection
@@ -27,8 +36,15 @@ if($leadinfo_post_json) {
             if ($select_result->num_rows == 0){
 
                 // Insert row in DB
-                $insert_query = "INSERT INTO `leadinfo_forms` (`leadinfo_id`, `leadinfo_data`, `bromotion_client_id`)
-            VALUES ('{$leadinfo_post->key}', '" . mysqli_real_escape_string($mysqli, $leadinfo_post_json) . "', " . Bromotion_client_id . ")";
+                $insert_query = "INSERT INTO `leadinfo_forms` (`leadinfo_id`, `bromotion_client_id`";
+                foreach(array_keys($leadinfo_fields_array) as $key){
+                    $insert_query .= ", `" . $key . "`";
+                }
+                $insert_query .= ") VALUES ('{$leadinfo_post->key}', " . Bromotion_client_id;
+                foreach($leadinfo_fields_array as $value){
+                    $insert_query .= ", '" . mysqli_real_escape_string($mysqli, $value) . "'";
+                }
+                $insert_query .= ")";
 
                 if ($mysqli->query($insert_query)) {
                     echo "Insert: " . $leadinfo_post->key;
@@ -43,10 +59,15 @@ if($leadinfo_post_json) {
 
                 // Update row in DB
                 $update_query = "UPDATE `leadinfo_forms` 
-            SET `leadinfo_data` = '" . mysqli_real_escape_string($mysqli, $leadinfo_post_json) . "', 
-                `bromotion_client_id` = " . Bromotion_client_id . "
-            WHERE `leadinfo_id` = '{$leadinfo_post->key}'";
+            SET `bromotion_client_id` = " . Bromotion_client_id;
 
+                foreach($leadinfo_fields_array as $key => $value){
+                    $update_query .= ", `" . $key . "` = '" . mysqli_real_escape_string($mysqli, $value) . "'";
+                }
+
+                $update_query .= "
+            WHERE `leadinfo_id` = '{$leadinfo_post->key}'";
+                
                 if ($mysqli->query($update_query)) {
                     echo "Update: " . $updated_id;
                 } else {

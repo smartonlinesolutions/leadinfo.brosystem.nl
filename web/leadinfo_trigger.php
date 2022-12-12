@@ -7,6 +7,11 @@ $leadinfo_post_json = file_get_contents('php://input');
 if($leadinfo_post_json) {
     $leadinfo_post = json_decode($leadinfo_post_json);
 
+    $timestamp = $leadinfo_post->timestamp;
+    $dt = new DateTime($timestamp);
+    $dt->add(new DateInterval('PT1H'));
+    $new_timestamp = date('Y-m-d H:i:s', $dt->getTimestamp());
+
     $leadinfo_fields_array = array(
         'address1' => $leadinfo_post->address1,
         'address2' => $leadinfo_post->address2,
@@ -42,7 +47,7 @@ if($leadinfo_post_json) {
         'purpose' => $leadinfo_post->purpose,
         'sales_volume' => $leadinfo_post->sales_volume,
         'tags' => $leadinfo_post->tags,
-        'timestamp' => $leadinfo_post->timestamp,
+        'timestamp' => $new_timestamp,
         'trigger' => $leadinfo_post->trigger,
         'trigger_name' => $leadinfo_post->trigger_name,
         'twitter' => $leadinfo_post->twitter,
